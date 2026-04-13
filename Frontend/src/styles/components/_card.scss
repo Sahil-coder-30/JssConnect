@@ -1,0 +1,63 @@
+@import '../abstracts/variables';
+@import '../abstracts/mixins';
+
+.auth-card {
+  width: 100%;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  @include glass-panel;
+  
+  @media (min-width: 768px) {
+    padding: 3rem;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+    text-align: center;
+
+    h2 {
+      font-family: $font-serif;
+      font-weight: 600;
+      font-size: 2rem;
+      color: $primary;
+      line-height: 1.25;
+      margin: 0 0 0.5rem 0;
+      letter-spacing: -0.025em;
+    }
+
+    p {
+      color: $text-light;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      margin: 0;
+    }
+  }
+
+  footer {
+    margin-top: 2.5rem;
+    text-align: center;
+
+    p {
+      color: $text-light;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      margin: 0;
+
+      a {
+        color: $accent;
+        font-weight: 700;
+        margin-left: 0.25rem;
+        text-decoration: none;
+        transition: color 0.3s;
+
+        &:hover {
+          color: #E0901A;
+        }
+      }
+    }
+  }
+}
