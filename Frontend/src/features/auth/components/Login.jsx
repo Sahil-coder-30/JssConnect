@@ -119,7 +119,7 @@ const Login = () => {
             <footer>
               <p>
                 Awaiting clearance? 
-                <a href="#">Initiate Node</a>
+                <a href="/register">Initiate Node</a>
               </p>
             </footer>
           </div>

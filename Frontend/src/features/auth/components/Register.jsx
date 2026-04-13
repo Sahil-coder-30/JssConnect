@@ -147,7 +147,7 @@ const Register = () => {
             <footer>
               <p>
                 Already registered? 
-                <a href="#">Authorize Session</a>
+                <a href="/login">Authorize Session</a>
               </p>
             </footer>
           </div>
