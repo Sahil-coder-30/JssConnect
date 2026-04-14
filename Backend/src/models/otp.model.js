@@ -10,13 +10,13 @@ const otpSchema = new mongoose.Schema({
     required: true,
   },
   type: {
-    type: String, // 'email_verification' or 'password_reset'
+    type: String, 
     default: 'email_verification'
   },
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 300, // 5 minutes (in seconds)
+    expires: 300, 
   },
 });
 
