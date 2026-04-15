@@ -30,28 +30,20 @@ export const authRegisterController = async (req, res, next) => {
       role,
     });
 
-    const emailVerificationToken = jwt.sign(
-      {
-        userId: newUser._id,
-        email: newUser.email,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
-
-    const verificationLink = `http://localhost:3000/api/auth/verify-email/${emailVerificationToken}`;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await otpModel.create({ email, otp, type: 'email_verification' });
 
     await sendEmail({
       to: newUser.email,
-      subject: "JSS Connect — Verify Email",
-      text: `JSS Connect\n\nVerify your email via this link: ${verificationLink}\nLink expires in 24 hours.\n\nWelcome to JSS Connect, ${newUser.username}!`,
+      subject: "JSS Connect — Verification Code",
+      text: `JSS Connect\n\nYour verification code is: ${otp}\nCode expires in 5 minutes.`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSS Connect Verification</title>
+    <title>JSS Connect Verification Code</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #333333; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -59,8 +51,8 @@ export const authRegisterController = async (req, res, next) => {
         .header h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
         .content { padding: 40px; text-align: center; }
         .content p { font-size: 16px; line-height: 1.6; color: #555555; margin-bottom: 25px; }
-        .button { display: inline-block; padding: 14px 32px; background-color: #0052cc; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; transition: background-color 0.3s; }
-        .button:hover { background-color: #0043a6; }
+        .code-box { display: inline-block; padding: 20px 40px; background-color: #f0f4f8; border: 1px solid #dce4ec; border-radius: 6px; margin: 20px 0; }
+        .code { font-size: 32px; font-weight: 700; color: #0052cc; letter-spacing: 8px; }
         .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 13px; color: #888888; border-top: 1px solid #eeeeee; }
     </style>
 </head>
@@ -71,9 +63,11 @@ export const authRegisterController = async (req, res, next) => {
         </div>
         <div class="content">
             <h2>Welcome to the Community, ${newUser.username}!</h2>
-            <p>Thank you for registering with JSS Connect. To activate your account and gain full access to our platform, please verify your email address.</p>
-            <a href="${verificationLink}" class="button">Verify Email</a>
-            <p style="margin-top: 30px; font-size: 14px; color: #999;">If the button above does not work, copy and paste the following link into your browser:<br><br><a href="${verificationLink}" style="color: #0052cc; word-break: break-all;">${verificationLink}</a></p>
+            <p>Please use the following code to verify your email. This code will expire in 5 minutes.</p>
+            <div class="code-box">
+                <div class="code">${otp}</div>
+            </div>
+            <p style="font-size: 14px; color: #888;">If you did not request this, please ignore this email.</p>
         </div>
         <div class="footer">
             &copy; ${new Date().getFullYear()} JSS Connect. All rights reserved.<br>
@@ -277,7 +271,7 @@ export const authGoogleCallbackController = async (req, res, next) => {
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
 
-      return res.redirect("http://localhost:5173/register");
+      return res.redirect(`http://localhost:5173/set-password?id=${newUser._id}`);
 
     }
 

@@ -17,7 +17,10 @@ app.use(
 app.use(morgan("dev"));
 
 // ── Routes ───────────────────────────────────────────────────────────────────
+import developerRouter from "../routes/developer.routes.js";
+
 app.use("/api/auth", authRouter);
+app.use("/api/developer", developerRouter);
 
 // ── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
