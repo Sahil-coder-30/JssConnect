@@ -15,6 +15,22 @@ const rpName = "JSS Connect Developer App";
 const rpID = "localhost";
 const origin = `http://${rpID}:5173`;
 
+const toBase64url = (value) => {
+  if (typeof value === 'string') return value;
+  if (Buffer.isBuffer(value)) return value.toString('base64url');
+  if (ArrayBuffer.isView(value)) return Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('base64url');
+  if (value instanceof ArrayBuffer) return Buffer.from(value).toString('base64url');
+  throw new Error('Unsupported credential data type');
+};
+
+const toBuffer = (value) => {
+  if (Buffer.isBuffer(value)) return value;
+  if (typeof value === 'string') return Buffer.from(value, 'base64url');
+  if (ArrayBuffer.isView(value)) return Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+  if (value instanceof ArrayBuffer) return Buffer.from(value);
+  throw new Error('Unsupported credential data type');
+};
+
 // Helper: Ensure the developer account exists
 const getOrCreateDeveloper = async (email) => {
   let developer = await developerModel.findOne({ email });
@@ -109,10 +125,12 @@ export const generateRegistration = async (req, res) => {
         userVerification: "preferred",
         authenticatorAttachment: "platform", // forces use of device biometrics
       },
-      excludeCredentials: user.passkeys.map((passkey) => ({
-        id: Uint8Array.from(Buffer.from(passkey.credentialID, 'base64url')),
-        type: "public-key",
-      })),
+      excludeCredentials: user.passkeys
+        .filter((passkey) => typeof passkey.credentialID === 'string' && passkey.credentialID)
+        .map((passkey) => ({
+          id: passkey.credentialID,
+          type: "public-key",
+        })),
     });
 
     user.currentChallenge = options.challenge;
@@ -162,10 +180,9 @@ export const verifyRegistration = async (req, res) => {
       const credPubKey = credential.publicKey || credential.credentialPublicKey;
 
       const newPasskey = {
-        // If it's a string, keep it. If it's a Uint8Array buffer, convert it.
-        credentialID: typeof credID === 'string' ? credID : Buffer.from(credID).toString('base64url'),
-        credentialPublicKey: Buffer.from(credPubKey).toString('base64url'),
-        counter: credential.counter,
+        credentialID: toBase64url(credID),
+        credentialPublicKey: toBase64url(credPubKey),
+        counter: credential.counter ?? 0,
         transports: credential.transports || data.response.transports || [],
       };
 
@@ -235,7 +252,7 @@ export const verifyAuth = async (req, res) => {
         expectedRPID: rpID,
         credential: {
           id: passkey.credentialID,
-          publicKey: Uint8Array.from(Buffer.from(passkey.credentialPublicKey, 'base64url')),
+          publicKey: toBuffer(passkey.credentialPublicKey),
           counter: passkey.counter,
         },
       });
@@ -315,7 +332,7 @@ export const facultyRegister = async (req, res) => {
         expectedRPID: rpID,
         credential: {
           id: passkey.credentialID,
-          publicKey: Uint8Array.from(Buffer.from(passkey.credentialPublicKey, 'base64url')),
+          publicKey: toBuffer(passkey.credentialPublicKey),
           counter: passkey.counter,
         },
       });

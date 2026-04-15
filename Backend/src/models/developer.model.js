@@ -1,5 +1,24 @@
 import mongoose from "mongoose";
 
+const passkeySchema = new mongoose.Schema({
+  credentialID: {
+    type: String,
+    required: true,
+  },
+  credentialPublicKey: {
+    type: String,
+    required: true,
+  },
+  counter: {
+    type: Number,
+    default: 0,
+  },
+  transports: {
+    type: [String],
+    default: [],
+  },
+});
+
 const developerSchema = new mongoose.Schema(
   {
     email: {
@@ -10,7 +29,7 @@ const developerSchema = new mongoose.Schema(
       trim: true,
     },
     passkeys: {
-      type: [Object], // Array of { credentialID, credentialPublicKey, counter, transports }
+      type: [passkeySchema],
       default: [],
     },
     currentChallenge: {
