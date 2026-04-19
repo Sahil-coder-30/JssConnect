@@ -1,10 +1,14 @@
 import mongoose from 'mongoose';
 
-const profileSchema = new mongoose.Schema({
+const UserprofileSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  profileImage: {
+    type: String,
+    default: null,
   },
   coverImage: {
     type: String,
@@ -82,5 +86,5 @@ const profileSchema = new mongoose.Schema({
 },
   { timestamps: true });
 
-const profileModel = mongoose.model("Profile", profileSchema);
-export default profileModel;
+const UserprofileModel = mongoose.model("UserProfile", UserprofileSchema);
+export default UserprofileModel;  

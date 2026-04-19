@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import cors from "cors";
 import authRouter from "../routes/auth.routes.js";
+import profileRouter from "../routes/profile.routes.js";
+import multer from 'multer'
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use(morgan("dev"));
 import developerRouter from "../routes/developer.routes.js";
 
 app.use("/api/auth", authRouter);
+app.use("/api/profile", profileRouter);
 app.use("/api/developer", developerRouter);
 
 // ── Global Error Handler ─────────────────────────────────────────────────────

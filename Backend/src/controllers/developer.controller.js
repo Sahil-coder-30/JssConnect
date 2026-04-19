@@ -305,20 +305,22 @@ export const validateFacultyRegister = async (req, res) => {
   }
   return res.status(403).json({ error: "Access Denied. Supreme Developer authorization required." });
 };
-
 export const facultyRegister = async (req, res) => {
   const { email, data, newFacultyData } = req.body;
+
   if (!email || !data || !newFacultyData) {
-     return res.status(400).json({ error: "Missing required fields." });
+    return res.status(400).json({ error: "Missing required fields." });
   }
 
   try {
-    const user = await developerModel.findOne({ email });
-    if (!user) return res.status(404).json({ error: "Developer not found" });
+    const developer = await developerModel.findOne({ email });
+    if (!developer) {
+      return res.status(404).json({ error: "Developer not found" });
+    }
 
-    const expectedChallenge = user.currentChallenge;
-    const passkey = user.passkeys.find(pk => pk.credentialID === data.id);
+    const expectedChallenge = developer.currentChallenge;
 
+    const passkey = developer.passkeys.find(pk => pk.credentialID === data.id);
     if (!passkey) {
       return res.status(400).json({ error: "Passkey not found" });
     }
@@ -343,38 +345,62 @@ export const facultyRegister = async (req, res) => {
 
     const { verified, authenticationInfo } = verification;
 
-    if (verified) {
-      passkey.counter = authenticationInfo.newCounter;
-      user.markModified('passkeys');
-      user.currentChallenge = null;
-      await user.save();
-
-      // Developer is verified via biometrics, proceed to create the faculty/admin user
-      const { role, fullname, newEmail, contact, password } = newFacultyData;
-
-      const existingUser = await userModel.findOne({ email: newEmail });
-      if (existingUser) {
-        return res.status(400).json({ error: "Email already registered." });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      const newUser = await userModel.create({
-        username: fullname,
-        email: newEmail,
-        password: hashedPassword,
-        contact: contact,
-        role: role,
-        verified: true // Verified because developer is creating them
+    if (!verified) {
+      return res.status(401).json({
+        error: "Cryptographic signature validation failed. Access Denied.",
       });
-
-      return res.json({ success: true, message: `${role} account created successfully.` });
-    } else {
-      return res.status(401).json({ error: "Cryptographic signature validation failed. Access Denied." });
     }
+
+    // update passkey counter
+    passkey.counter = authenticationInfo.newCounter;
+    developer.markModified("passkeys");
+    developer.currentChallenge = null;
+    await developer.save();
+
+    // extract data
+    const { role, fullname, newEmail, contact, password } = newFacultyData;
+
+    if (!fullname || !newEmail || !password || !role) {
+      return res.status(400).json({ error: "Incomplete faculty data." });
+    }
+
+    // strict role validation
+    const allowedRoles = ["faculty", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: "Invalid role." });
+    }
+
+    // only supreme developer can create admin
+    if (role === "admin" && req.user?.role !== "supreme_developer") {
+      return res.status(403).json({
+        error: "Only supreme developer can create admin.",
+      });
+    }
+
+    const existingUser = await userModel.findOne({ email: newEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await userModel.create({
+      username: fullname,
+      email: newEmail,
+      password: hashedPassword,
+      contact: contact || null,
+      role: role,
+      verified: true,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `${role} account created successfully.`,
+      userId: newUser._id,
+    });
+
   } catch (error) {
     console.error("--> facultyRegister Error:", error.message);
-    res.status(500).json({ error: "Failed to register staff" });
+    return res.status(500).json({ error: "Failed to register staff" });
   }
 };
-
